@@ -1,0 +1,11 @@
+#! /bin/bash
+
+curl -fsSL 'https://raw.githubusercontent.com/maqian/workarounds/master/ubuntu/vivid/set-apt-sources-cn' | sh \
+  && apt-get update \
+  && apt-get -y install language-pack-zh-hans \
+  && sed -i 's/# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/g' /etc/locale.gen \
+  && locale-gen \
+  && echo LC_ALL="zh_CN.UTF-8" >> /etc/environment \
+  && echo LANG="zh_CN.UTF-8" >> /etc/environment \
+  && echo LANGUAGE="zh_CN.UTF-8:zh:en_US:en" >> /etc/environment
+

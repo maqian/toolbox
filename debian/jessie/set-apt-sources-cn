@@ -1,0 +1,9 @@
+#! /bin/bash
+
+aliyun_sources_file=/etc/apt/sources.list.d/aliyun-jessie.list
+cat /dev/null > $aliyun_sources_file \
+  && echo deb http://mirrors.aliyun.com/debian/ jessie main non-free contrib >> $aliyun_sources_file \
+  && echo deb http://mirrors.aliyun.com/debian/ jessie-updates main non-free contrib >> $aliyun_sources_file \
+  && echo deb http://mirrors.aliyun.com/debian/ jessie-backports main non-free contrib >> $aliyun_sources_file \
+  && echo deb http://mirrors.aliyun.com/debian-security/ jessie/updates main non-free contrib >> $aliyun_sources_file
+
