@@ -1,0 +1,105 @@
+#! /bin/bash
+
+function get_java_opt() {
+    local opts="$1"
+    local key="$2"
+    local value=""
+
+    if [[ "$opts" =~ .*$key=.* ]]; then
+        value=`echo $opts|sed "s/.*$key=\([^ ]*\).*/\1/"`
+    fi
+
+    if [ -z "$value" ] && [ "$key" = "-XX:MaxHeapSize" ] && [[ "$opts" =~ .*-Xmx.* ]]; then
+        value=`echo $opts|sed 's/.*-Xmx\([^ ]*\).*/\1/'`
+    fi
+
+    if [ -n "$value" ] && [[ ! "$value" =~ [0-9]+[mM]$ ]]; then
+        echo m or M is the only support unit for param $key
+        return 1
+    else
+        echo $value|sed 's/\([0-9]*\)[mM]/\1/'
+        return 0
+    fi
+}
+
+function get_env() {
+    local key="$1"
+    local value="${!key}"
+
+    if [ -n "$value" ] && [[ ! "$value" =~ [0-9]+[mM]$ ]]; then
+        echo m or M is the only support unit for env $key
+        return 1
+    else
+        echo $value|sed 's/\([0-9]*\)[mM]/\1/'
+        return 0
+    fi
+}
+
+function rm_java_opt() {
+    local opts="$1"
+    local key="$2"
+    
+    local value=`echo $opts|sed "s/\(.*\)$key=[^ ]*\(.*\)/\1\2/"`
+    if [ "$key" = "-XX:MaxHeapSize" ]; then
+        value=`echo $value|sed "s/\(.*\)-Xmx[^ ]*\(.*\)/\1\2/"`
+    fi
+
+    echo $value
+}
+
+if [ -z "$JAVA_HOME" ]; then
+    echo JAVA_HOME is not set int your environment. && exit 1
+fi
+
+# apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
+limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+if [ "$limit_in_bytes" -eq "9223372036854771712" ]; then
+    echo $JAVA_HOME/bin/java $*
+else
+    limit_in_mb=$((limit_in_bytes / 1048576))
+    echo memroy limit: ${limit_in_mb}m
+    reserved_mem_size=$(get_env "ReservedMemorySize")
+    if [ $? -ne 0 ]; then
+      echo $reserved_mem_size && exit 1
+    fi
+    [ -z "$reserved_mem_size" ] && reserved_mem_size=64
+    echo accept ReservedMemorySize: ${reserved_mem_size}m
+
+    java_params="$*"
+
+    max_direct_memory_size=$(get_java_opt "$java_params"  "-XX:MaxDirectMemorySize")
+    if [ $? -ne 0 ]; then
+        echo $max_direct_memory_size && exit 1
+    fi
+    [ -z "$max_direct_memory_size" ] && max_direct_memory_size=128
+    echo accept MaxDirectMemorySize: ${max_direct_memory_size}m
+    java_params=$(rm_java_opt "$java_params" "-XX:MaxDirectMemorySize")
+
+    max_meta_space_size=$(get_java_opt "$java_params" "-XX:MaxMetaspaceSize")
+    if [ $? -ne 0 ]; then
+        echo $max_meta_space_size && exit 1
+    fi
+    [ -z "$max_meta_space_size" ] && max_meta_space_size=128
+    echo accept MaxMetaspaceSize: ${max_meta_space_size}m
+    java_params=$(rm_java_opt "$java_params" "-XX:MaxMetaspaceSize")
+
+    max_heap_size=$(get_java_opt "$java_params" "-XX:MaxHeapSize")
+    if [ $? -ne 0 ]; then
+        echo $max_heap_size && exit 1
+    fi
+ 
+    if [ -z "$max_heap_size" ]; then
+        max_heap_size=$((limit_in_mb - reserved_mem_size - max_direct_memory_size - max_meta_space_size))
+    fi
+    if [ $((max_heap_size + max_meta_space_size + max_direct_memory_size + reserved_mem_size)) -gt $limit_in_mb ]; then
+        echo memory required\(MaxHeapSize=${max_heap_size}m, MaxMetaspaceSize=${max_meta_space_size}m, MaxDirectMemorySize=${max_direct_memory_size}m, ReservedMemorySize=${reserved_mem_size}m\) exceed the limit the hole memory: $limit_in_mb && exit 1
+    fi
+    if [ $max_heap_size -le 0 ]; then
+        echo MaxHeapSize is less than 0. && exit 1
+    fi
+    echo accept MaxHeapSize: ${max_heap_size}m
+    java_params=$(rm_java_opt "$java_params" "-XX:MaxHeapSize")
+
+    echo java_params: $java_params
+    echo $JAVA_HOME/bin/java -XX:MaxHeapSize=${max_heap_size}m -XX:MaxMetaspaceSize=${max_meta_space_size}m -XX:MaxDirectMemorySize=${max_direct_memory_size}m $java_params
+fi
