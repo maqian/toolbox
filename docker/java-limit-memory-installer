@@ -1,0 +1,22 @@
+#! /bin/bash
+
+# MAINTAINER Ma Qian<maqian258@gmail.com>
+
+which java > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    java_dir=$(dirname `which java`)
+fi
+
+[ ! -f "$java_dir/java" ] && java_dir="$JAVA_HOME/bin"
+
+if [ ! -f "$java_dir/java" ]; then
+    echo could not find java program in your system, please install a java package or set JAVA_HOME environment. && exit 1
+fi
+
+cd $java_dir \
+  && curl -o java-limit-memory 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
+  && chmod +x java-limit-memory \
+  && sed -i 's#/JAVACMD=.*#JAVACMD=$java_dir/system-java#g' java-limit-memory \
+  && mv java system-java \
+  && ln -s java-limit-memory java
+  
