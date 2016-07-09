@@ -1,0 +1,13 @@
+#! /bin/bash
+
+# MAINTAINER Ma Qian<maqian258@gmail.com>
+
+JAVA_PACKAGE=$1
+JAVA_VERSION=$2 
+JAVA_UPDATE=$3 
+JAVA_BUILD=$4
+JAVA_FILE=${JAVA_PACKAGE}-${JAVA_VERSION}u${JAVA_UPDATE}-linux-x64.rpm
+
+curl -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie;" http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/${JAVA_FILE} \
+  && yum localinstall -y /tmp/${JAVA_FILE} \
+  && rm -rf /tmp/${JAVA_FILE} 

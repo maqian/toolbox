@@ -1,0 +1,3 @@
+#! /bin/bash
+
+echo ZONE="Asia/Shanghai" > /etc/sysconfig/clock && "cp" -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
