@@ -1,5 +1,5 @@
 #! /bin/bash
 
 yum install -y kde-l10n-Chinese \
-  && yum -y reinstall glibc-common \
+  && yum reinstall -y glibc-common \
   && sed -i 's/LANG=.*/LANG="zh_CN.UTF-8"/g' /etc/locale.conf
