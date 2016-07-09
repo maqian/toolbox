@@ -14,7 +14,7 @@ if [ ! -f "$java_dir/java" ]; then
 fi
 
 cd $java_dir \
-  && curl -o java-limit-memory 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
+  && curl -sSL -o java-limit-memory 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
   && chmod +x java-limit-memory \
   && sed -i "s#JAVACMD=.*#JAVACMD=$java_dir/system-java#g" java-limit-memory \
   && mv java system-java \
