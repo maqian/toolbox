@@ -63,7 +63,7 @@ else
     if [ $? -ne 0 ]; then
       echo $reserved_mem_size && exit 1
     fi
-    [ -z "$reserved_mem_size" ] && reserved_mem_size=64
+    [ -z "$reserved_mem_size" ] && reserved_mem_size=32
 
     java_params="$*"
 
