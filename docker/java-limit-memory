@@ -90,10 +90,10 @@ else
         max_heap_size=$((limit_in_mb - reserved_mem_size - max_direct_memory_size - max_meta_space_size))
     fi
     if [ $((max_heap_size + max_meta_space_size + max_direct_memory_size + reserved_mem_size)) -gt $limit_in_mb ]; then
-        echo memory required\(MaxHeapSize=${max_heap_size}m, MaxMetaspaceSize=${max_meta_space_size}m, MaxDirectMemorySize=${max_direct_memory_size}m, ReservedMemorySize=${reserved_mem_size}m\) exceed the limit the hole memory: $limit_in_mb && exit 1
+        echo memory required\(MaxHeapSize=${max_heap_size}m, MaxMetaspaceSize=${max_meta_space_size}m, MaxDirectMemorySize=${max_direct_memory_size}m, ReservedMemorySize=${reserved_mem_size}m\) exceed the limitation: ${limit_in_mb}m && exit 1
     fi
     if [ $max_heap_size -le 0 ]; then
-        echo MaxHeapSize is less than 0. && exit 1
+        echo MaxHeapSize should not be less than 0. && exit 1
     fi
     java_params=$(rm_java_opt "$java_params" "-XX:MaxHeapSize")
 
