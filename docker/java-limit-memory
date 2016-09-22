@@ -5,12 +5,8 @@ function get_java_opt() {
     local key="$2"
     local value=""
 
-    if [[ "$opts" =~ .*$key=.* ]]; then
-        value=`echo $opts|sed "s/.*$key=\([^ ]*\).*/\1/"`
-    fi
-
-    if [ -z "$value" ] && [ "$key" = "-XX:MaxHeapSize" ] && [[ "$opts" =~ .*-Xmx.* ]]; then
-        value=`echo $opts|sed 's/.*-Xmx\([^ ]*\).*/\1/'`
+    if [[ "$opts" =~ .*$key=?.* ]]; then
+        value=`echo $opts|sed "s/.*$key=\?\([^ =]*\).*/\1/"`
     fi
 
     if [ -n "$value" ] && [[ ! "$value" =~ [0-9]+[mM]$ ]]; then
@@ -35,18 +31,6 @@ function get_env() {
     fi
 }
 
-function rm_java_opt() {
-    local opts="$1"
-    local key="$2"
-    
-    local value=`echo $opts|sed "s/\(.*\)$key=[^ ]*\(.*\)/\1\2/"`
-    if [ "$key" = "-XX:MaxHeapSize" ]; then
-        value=`echo $value|sed "s/\(.*\)-Xmx[^ ]*\(.*\)/\1\2/"`
-    fi
-
-    echo $value
-}
-
 JAVACMD="java"
 $JAVACMD -version > /dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -54,9 +38,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
-limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+#limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+limit_in_bytes=8589934592
 limit_in_mb=$((limit_in_bytes / 1048576))
 if [ "$limit_in_mb" -gt "1048576" ]; then
+    echo $JAVACMD $*
     $JAVACMD $*
 else
     reserved_mem_size=$(get_env "ReservedMemorySize")
@@ -71,31 +57,49 @@ else
     if [ $? -ne 0 ]; then
         echo $max_direct_memory_size && exit 1
     fi
-    [ -z "$max_direct_memory_size" ] && max_direct_memory_size=128
-    java_params=$(rm_java_opt "$java_params" "-XX:MaxDirectMemorySize")
+    if [ -z "$max_direct_memory_size" ]; then
+        has_max_direct_memory_size=0
+        max_direct_memory_size=128
+    fi
 
     max_meta_space_size=$(get_java_opt "$java_params" "-XX:MaxMetaspaceSize")
     if [ $? -ne 0 ]; then
         echo $max_meta_space_size && exit 1
     fi
-    [ -z "$max_meta_space_size" ] && max_meta_space_size=128
-    java_params=$(rm_java_opt "$java_params" "-XX:MaxMetaspaceSize")
+    if [ -z "$max_meta_space_size" ]; then
+        has_max_meta_space_size=0
+        max_meta_space_size=128
+    fi
 
     max_heap_size=$(get_java_opt "$java_params" "-XX:MaxHeapSize")
     if [ $? -ne 0 ]; then
         echo $max_heap_size && exit 1
     fi
- 
     if [ -z "$max_heap_size" ]; then
+        max_heap_size=$(get_java_opt "$java_params" "-Xmx")
+    fi
+    if [ -z "$max_heap_size" ]; then
+        has_max_heap_size=0
         max_heap_size=$((limit_in_mb - reserved_mem_size - max_direct_memory_size - max_meta_space_size))
     fi
+
     if [ $((max_heap_size + max_meta_space_size + max_direct_memory_size + reserved_mem_size)) -gt $limit_in_mb ]; then
         echo memory required\(MaxHeapSize=${max_heap_size}m, MaxMetaspaceSize=${max_meta_space_size}m, MaxDirectMemorySize=${max_direct_memory_size}m, ReservedMemorySize=${reserved_mem_size}m\) exceed the limitation: ${limit_in_mb}m && exit 1
     fi
     if [ $max_heap_size -le 0 ]; then
         echo MaxHeapSize should not be less than 0. && exit 1
     fi
-    java_params=$(rm_java_opt "$java_params" "-XX:MaxHeapSize")
-
-    $JAVACMD -XX:MaxHeapSize=${max_heap_size}m -XX:MaxMetaspaceSize=${max_meta_space_size}m -XX:MaxDirectMemorySize=${max_direct_memory_size}m $java_params
+    
+    ext_params=""
+    if [ "$has_max_direct_memory_size" = "0" ]; then
+        ext_params="$ext_params -XX:MaxDirectMemorySize=${max_direct_memory_size}m"
+    fi
+    if [ "$has_max_meta_space_size" = "0" ]; then
+        ext_params="$ext_params -XX:MaxMetaspaceSize=${max_meta_space_size}m"
+    fi
+    if [ "$has_max_heap_size" = "0" ]; then
+        ext_params="$ext_params -XX:MaxHeapSize=${max_heap_size}m"
+    fi
+    echo $JAVACMD $ext_params $java_params
+    $JAVACMD $ext_params $java_params
 fi
