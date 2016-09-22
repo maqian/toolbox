@@ -38,11 +38,9 @@ if [ $? -ne 0 ]; then
 fi
 
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
-#limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-limit_in_bytes=8589934592
+limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
 limit_in_mb=$((limit_in_bytes / 1048576))
 if [ "$limit_in_mb" -gt "1048576" ]; then
-    echo $JAVACMD $*
     $JAVACMD $*
 else
     reserved_mem_size=$(get_env "ReservedMemorySize")
@@ -100,6 +98,5 @@ else
     if [ "$has_max_heap_size" = "0" ]; then
         ext_params="$ext_params -XX:MaxHeapSize=${max_heap_size}m"
     fi
-    echo $JAVACMD $ext_params $java_params
     $JAVACMD $ext_params $java_params
 fi
