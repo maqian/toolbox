@@ -64,7 +64,7 @@ if [ $? -ne 0 ]; then
     echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
 fi
 
-debug="${DEBUG}"
+debug="$DEBUG"
 
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
 limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
@@ -82,6 +82,7 @@ else
         reserved_mem_size=60
         [ "$debug" = "on" ] && echo environment variable ReservedMemorySize is not set, use default value ${reserved_mem_size}m
     fi
+
     java_params="$*"
 
     max_direct_memory_size=$(get_java_opt "$java_params"  "-XX:MaxDirectMemorySize")
@@ -188,6 +189,10 @@ else
     if [ "$has_thread_stack_size" = "0" ]; then
         ext_params="$ext_params -Xss${thread_stack_size}"
     fi
+    if [ "$debug" = "on" ]; then
+        ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags"
+    fi
+
     [ "$debug" = "on" ] && echo $JAVACMD $ext_params $java_params
     exec $JAVACMD $ext_params $java_params
 fi

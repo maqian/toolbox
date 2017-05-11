@@ -51,3 +51,5 @@ curl -SL -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-
         $JRE_RM_PATH/lib/jfr.jar \
         $JRE_RM_PATH/lib/jfr \
         $JRE_RM_PATH/lib/oblique-fonts
+
+echo export JAVA_HOME=/usr/java/jdk1.8.0_131 >> /etc/profile
