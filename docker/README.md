@@ -1,27 +1,32 @@
-java-limit-memory
-==================
-java-limit-memory是一个在docker容器中限制java程序使用内存的脚本。
+文件列表
+=======
+java-limit-memory，java程序启动脚本，容器中使用此脚本来启动java程序，可以给java进程加上默认的内存限制
+java-limit-memory-installer，这是一个安装脚本，用于将java-limit-memory脚本安装到镜像中
 
 
-Backgroud
-=========
-启动docker容器时用-m参数指定了内存限制，但是java进程中获取的内存任然是宿主机的内存。这就导致启动时没有指定最大内存参数的java程序，默认的内存有可能超出容器内存限制，而被docker daemon进程kill。
+背景介绍
+=======
+Docker容器启动时可使用-m参数限制内存，在当前版本的Java虚拟机中，不能正确读取Docker容器限制的内存，仍然会使用宿主机的内存。如果Java进程启动时没有指定内存参数，则会使用默认的值（默认情况下，使用总内存的1/64作为初始堆内存，使用总内存的1/4作为最大堆内存），这样很容易导致容器中的Java进程在运行过程中申请超出容器限制的内存。根据策略，如果Docker Daemon检测到容器使用的内存超出了限制，会直接将容器kill。
+为了保证容器中的Java进程只使用容器限制的内存，必须在java启动参数中指定内存大小。为了避免没有设置java内存参数导致的内存超限问题，脚本中给java启动参数强制加上了默认的内存参数，并使用断言保证java进程只使用容器限制的内存。
 
 
-Synopsis
-========
-java8的内存占用由堆内存(Heap)，元空间(MetaSpace)，直接内存(DirectMemory)3部分组成。java程序可以在启动参数中设置-Xmx/-XX:MaxHeapSize, -XX:MaxMetaspaceSize, -XX:MaxDirectMemorySize这些参数来限制各部分内存的大小。docker容器的内存限制可以从/sys/fs/cgroup/memory/memory.limit_in_bytes文件中获取。java-limit-memory脚本会根据docker容器的内存限制，与java的运行参数，动态计算出java堆内存的大小。
+工作原理
+=======
+java-limit-memory会检测java启动参数，对没有设置的内存参数指定默认值。流程如下：
+1. 从文件/sys/fs/cgroup/memory/memory.limit_in_bytes读取cgroups内存限制LimitMemory
+1. 检测是否含有环境变量ReservedMemorySize（这个变量为脚本预设，非jvm标准参数，用于在容器中保留non-heap内存给线程栈使用），没有则设置为60M
+1. 检测是否含有参数-XX:MaxMetaspaceSize，没有则设置为100M
+1. 检测是否含有参数-XX:MaxDirectMemorySize，没有则设置为32M
+1. 检测是否含有参数-XX:ReservedCodeCacheSize，没有则设置为100M
+1. 检测是否含有参数-XX:CompressedClassSpaceSize，没有则设置为32M
+1. 检测是否含有参数-XX:MaxHeapSize或者-Xmx，没有则设置为MaxHeapSize = LimitMemory - MaxThreadStackSize - MaxMetaspaceSize - MaxDirectMemorySize - ReservedCodeCacheSize - CompressedClassSpaceSize
+1. 检测是否含有参数-Xms，没有则设置为MaxHeapSize/2
+1. 检测是否含有-Xss参数，没有则设置为256K
 
 
+如何安装
+=======
+运行安装脚本
+`curl -sSL 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory-installer' | sh`
+安装脚本执行完后，会将系统的java程序文件重命名为system-java，将java-limit-memory脚本保存为java文件
 
-
-
-ReservedMemory
-==============
-有些情况下，并不希望java程序用完整个容器的内存。我们可以通过环境变量ReservedMemory来设置保留内存。java-limit-memory会先从容器的内存限制中减去ReservedMemory部分，然后再动态计算大小。
-如果不指定ReservedMemory，默认值为64M。
-
-
-Installation
-============
-执行java-limit-memory-installer脚本，可以将java-limit-memory脚本安装到系统中。
