@@ -6,6 +6,7 @@ JAVA_PACKAGE=$1
 JAVA_VERSION=$2 
 JAVA_UPDATE=$3 
 JAVA_BUILD=$4
+DIR=$5
 JAVA_FILE=${JAVA_PACKAGE}-${JAVA_VERSION}u${JAVA_UPDATE}-linux-x64.rpm
 JAVA_HOME=/usr/java/${JAVA_PACKAGE}1.${JAVA_VERSION}.0_${JAVA_UPDATE}
 JRE_RM_PATH="$JAVA_HOME"
@@ -14,7 +15,7 @@ if [ "$JAVA_PACKAGE" = "jdk" ]; then
 fi
 
 
-curl -SL -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie;" http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/${JAVA_FILE} \
+curl -SL -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie;" http://download.oracle.com/otn-pub/java/jdk/$DIR/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/${JAVA_FILE} \
   && yum localinstall -y /tmp/${JAVA_FILE} \
   && rm -rf /tmp/${JAVA_FILE} \
   && rm -rf $JAVA_HOME/*src.zip \
