@@ -15,7 +15,7 @@ if [ "$JAVA_PACKAGE" = "jdk" ]; then
 fi
 
 
-curl -SL -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie;" http://download.oracle.com/otn-pub/java/jdk/$DIR/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/${JAVA_FILE} \
+curl -SL -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie;" http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/$DIR/${JAVA_FILE} \
   && yum localinstall -y /tmp/${JAVA_FILE} \
   && rm -rf /tmp/${JAVA_FILE} \
   && rm -rf $JAVA_HOME/*src.zip \
