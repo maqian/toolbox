@@ -77,7 +77,7 @@ else
         echo $reserved_mem_size && exit 1
     fi
     if [ -z "$reserved_mem_size" ]; then
-        reserved_mem_size=50
+        reserved_mem_size=60
         echo environment variable ReservedMemorySize is not set, use default value ${reserved_mem_size}m
     fi
     java_params="$*"
