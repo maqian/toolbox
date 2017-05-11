@@ -64,11 +64,13 @@ if [ $? -ne 0 ]; then
     echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
 fi
 
+debug="${DEBUG}"
+
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
 limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
 limit_in_mb=$((limit_in_bytes / 1048576))
 if [ "$limit_in_mb" -gt "1048576" ]; then
-    echo $JAVACMD $*
+    [ "$debug" = "on" ] && echo $JAVACMD $*
     exec $JAVACMD $*
 else
 
@@ -78,7 +80,7 @@ else
     fi
     if [ -z "$reserved_mem_size" ]; then
         reserved_mem_size=60
-        echo environment variable ReservedMemorySize is not set, use default value ${reserved_mem_size}m
+        [ "$debug" = "on" ] && echo environment variable ReservedMemorySize is not set, use default value ${reserved_mem_size}m
     fi
     java_params="$*"
 
@@ -89,7 +91,7 @@ else
     if [ -z "$max_direct_memory_size" ]; then
         has_max_direct_memory_size=0
         max_direct_memory_size=32
-        echo vm option -XX:MaxDirectMemorySize is not set, use default value ${max_direct_memory_size}m
+        [ "$debug" = "on" ] && echo vm option -XX:MaxDirectMemorySize is not set, use default value ${max_direct_memory_size}m
     fi
 
     max_meta_space_size=$(get_java_opt "$java_params" "-XX:MaxMetaspaceSize")
@@ -99,7 +101,7 @@ else
     if [ -z "$max_meta_space_size" ]; then
         has_max_meta_space_size=0
         max_meta_space_size=100
-        echo vm option -XX:MaxMetaspaceSize is not set, use default value ${max_meta_space_size}m
+        [ "$debug" = "on" ] && echo vm option -XX:MaxMetaspaceSize is not set, use default value ${max_meta_space_size}m
     fi
 
     max_code_cache_size=$(get_java_opt "$java_params" "-XX:ReservedCodeCacheSize")
@@ -109,7 +111,7 @@ else
     if [ -z "$max_code_cache_size" ]; then
         has_max_code_cache_size=0
         max_code_cache_size=100
-        echo vm option -XX:ReservedCodeCacheSize is not set, use default value ${max_code_cache_size}m
+        [ "$debug" = "on" ] && echo vm option -XX:ReservedCodeCacheSize is not set, use default value ${max_code_cache_size}m
     fi
 
     max_compressed_class_size=$(get_java_opt "$java_params" "-XX:CompressedClassSpaceSize")
@@ -119,7 +121,7 @@ else
     if [ -z "$max_compressed_class_size" ]; then
         has_max_compressed_class_size=0
         max_compressed_class_size=32
-        echo vm option -XX:CompressedClassSpaceSize is not set, use default value ${max_compressed_class_size}m
+        [ "$debug" = "on" ] && echo vm option -XX:CompressedClassSpaceSize is not set, use default value ${max_compressed_class_size}m
     fi
 
     max_heap_size=$(get_java_opt "$java_params" "-XX:MaxHeapSize")
@@ -132,7 +134,7 @@ else
     if [ -z "$max_heap_size" ]; then
         has_max_heap_size=0
         max_heap_size=$((limit_in_mb - reserved_mem_size - max_meta_space_size - max_direct_memory_size - max_code_cache_size - max_compressed_class_size))
-        echo vm option -Xmx is not set, so we figure out the value ${max_heap_size}m
+        [ "$debug" = "on" ] && echo vm option -Xmx is not set, so we figure out the value ${max_heap_size}m
     fi
 
     if [ $((max_heap_size + reserved_mem_size + max_meta_space_size + max_direct_memory_size + max_code_cache_size + max_compressed_class_size)) -gt $limit_in_mb ]; then
@@ -149,7 +151,7 @@ else
     if [ -z "$min_heap_size" ]; then
         has_min_heap_size=0
         min_heap_size=$((max_heap_size/2))
-        echo vm option -Xms is not set, so we figure out the value ${min_heap_size}m
+        [ "$debug" = "on" ] && echo vm option -Xms is not set, so we figure out the value ${min_heap_size}m
     fi
 
     thread_stack_size=$(get_java_opt "$java_params" "-Xss")
@@ -186,6 +188,6 @@ else
     if [ "$has_thread_stack_size" = "0" ]; then
         ext_params="$ext_params -Xss${thread_stack_size}"
     fi
-    echo $JAVACMD $ext_params $java_params
+    [ "$debug" = "on" ] && echo $JAVACMD $ext_params $java_params
     exec $JAVACMD $ext_params $java_params
 fi
