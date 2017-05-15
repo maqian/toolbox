@@ -19,7 +19,7 @@ java-limit-memory会检测java启动参数，对没有设置的内存参数指�
 1. 检测是否含有参数-XX:MaxDirectMemorySize，没有则设置为32M
 1. 检测是否含有参数-XX:ReservedCodeCacheSize，没有则设置为100M
 1. 检测是否含有参数-XX:CompressedClassSpaceSize，没有则设置为32M
-1. 检测是否含有参数-XX:MaxHeapSize或者-Xmx，没有则设置为MaxHeapSize = LimitMemory - MaxThreadStackSize - MaxMetaspaceSize - MaxDirectMemorySize - ReservedCodeCacheSize - CompressedClassSpaceSize
+1. 检测是否含有参数-XX:MaxHeapSize或者-Xmx，没有则设置为MaxHeapSize = LimitMemory - ReservedMemorySize - MaxMetaspaceSize - MaxDirectMemorySize - ReservedCodeCacheSize - CompressedClassSpaceSize
 1. 检测是否含有参数-Xms，没有则设置为MaxHeapSize/2
 1. 检测是否含有-Xss参数，没有则设置为256K
 
