@@ -194,8 +194,7 @@ else
         ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags"
     fi
 
-    java_version=`$JAVACMD -version  2>&1 |head -n1|sed 's/"//g'|awk '{print $3}'`
-    if [[ "$java_version" < "1.8.0_152" ]] && [[ "$interpret" != "off" ]] && [[ "$interpret" != "OFF" ]]; then
+    if [[ "$interpret" == "on" ]] || [[ "$interpret" == "ON" ]]; then
         ext_params="$ext_params -Xint"        
     fi
     [ "$trace" = "on" ] && echo $JAVACMD $ext_params $java_params
