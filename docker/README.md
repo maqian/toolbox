@@ -24,7 +24,7 @@ java-limit-memory会检测java启动参数，对没有设置的内存参数指�
 1. 检测是否含有JAVA启动参数-XX:GCTimeRatio，没有则设置为4
 1. 检测是否含有JAVA启动参数-XX:AdaptiveSizePolicyWeight，没有则设置为90
 1. 检测环境变量X_INT，如果值为on|ON，则添加JAVA启动参数-Xint
-1. 检测环境变量X_TRACE，如果只为on|ON，则添加JAVA启动参数-XX:+PrintVMOptions -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics
+1. 检测环境变量X_TRACE，如果只为on|ON，则添加JAVA启动参数-XX:+PrintVMOptions -XX:+PrintCommandLineFlags -XX:+UnlockDiagnosticVMOptions -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics
 
 如何安装
 =======

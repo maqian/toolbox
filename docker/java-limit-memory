@@ -171,7 +171,7 @@ else
 
     JAVA_VERSION=`$JAVACMD -version  2>&1 |head -n1|sed 's/"//g'|awk '{print $3}'`
     ext_params="-XX:MaxRAM=${limit_in_mb}m"
-    [[ ! "$JAVA_VERSION" < "1.8.0_131" ]] && ext_params="$ext_params -XX:+UseCGroupMemoryLimitForHeap"
+    [[ ! "$JAVA_VERSION" < "1.8.0_131" ]] && ext_params="$ext_params -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
     [ "$has_max_heap_size" = "0" ] && ext_params="$ext_params -Xmx${max_heap_size}m"
     [ "$has_min_heap_size" = "0" ] && ext_params="$ext_params -Xms${min_heap_size}m"
     [ "$has_thread_stack_size" = "0" ] && ext_params="$ext_params -Xss${thread_stack_size}"
@@ -181,7 +181,7 @@ else
     [ "$has_max_heap_free_ratio" = "0" ] && ext_params="$ext_params -XX:MaxHeapFreeRatio=$max_heap_free_ratio"
     [ "$has_gc_time_ratio" = "0" ] && ext_params="$ext_params -XX:GCTimeRatio=$gc_time_ratio"
     [ "$has_adaptive_size_policy_weight" = "0" ] && ext_params="$ext_params -XX:AdaptiveSizePolicyWeight=$adaptive_size_policy_weight"
-    [ "$trace" = "on" ] && ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics"
+    [ "$trace" = "on" ] && ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags -XX:+UnlockDiagnosticVMOptions -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics"
     [ "$trace" = "on" ] && echo $JAVACMD $ext_params $java_params
     exec $JAVACMD $ext_params $java_params
 fi
