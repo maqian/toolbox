@@ -76,7 +76,7 @@ if [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
 fi
 
 if [ -z "$limit_in_mb" ]; then
-    limit_in_mb=$(get_env "X_MOCK_LIMIT")
+    limit_in_mb=$(get_env "X_MEM_LIMIT")
 fi
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
