@@ -2,21 +2,17 @@
 
 # MAINTAINER Ma Qian<maqian258@gmail.com>
 
-which java > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    java_dir=$(dirname `which java`)
+JAVACMD=`type java |awk '{print $(NF)}'`
+$JAVACMD -version > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
 fi
 
-[ ! -f "$java_dir/java" ] && java_dir="$JAVA_HOME/bin"
-
-if [ ! -f "$java_dir/java" ]; then
-    echo could not find java program in your system, please install a java package or set JAVA_HOME environment. && exit 1
+$JAVACMD -version > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
 fi
 
-cd $java_dir \
-  && curl -sSL -o java-limit-memory 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
-  && chmod +x java-limit-memory \
-  && sed -i "s#JAVACMD=.*#JAVACMD=$java_dir/system-java#g" java-limit-memory \
-  && mv java system-java \
-  && ln -s java-limit-memory java
-  
+curl -sSL -o /usr/local/bin/java 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
+  && chmod +x /usr/local/bin/java \
+  && ed -i "s#JAVACMD=.*#JAVACMD=$JAVACMD#g" java-limit-memory 

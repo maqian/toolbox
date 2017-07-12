@@ -64,8 +64,9 @@ if [ $? -ne 0 ]; then
     echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
 fi
 
-trace="$X_TRACE"
-interpret="$X_INT"
+trace="$X_TRACE"; [ "$trace" = "ON" ] && trace=on
+interpret="$X_INT"; [ "$interpret" = "ON" ] && interpret=on
+heap_ratio="$X_HEAP_RATIO"; [ -z "$heap_ratio" ] && heap_ratio=0.6
 
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
 
@@ -77,57 +78,7 @@ if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
     [ "$trace" = "on" ] && echo $JAVACMD $*
     exec $JAVACMD $*
 else
-
-    reserved_mem_size=$(get_env "ReservedMemorySize")
-    if [ $? -ne 0 ]; then
-        echo $reserved_mem_size && exit 1
-    fi
-    if [ -z "$reserved_mem_size" ]; then
-        reserved_mem_size=60
-        [ "$trace" = "on" ] && echo environment variable ReservedMemorySize is not set, use default value ${reserved_mem_size}m
-    fi
-
     java_params="$*"
-
-    max_direct_memory_size=$(get_java_opt "$java_params"  "-XX:MaxDirectMemorySize")
-    if [ $? -ne 0 ]; then
-        echo $max_direct_memory_size && exit 1
-    fi
-    if [ -z "$max_direct_memory_size" ]; then
-        has_max_direct_memory_size=0
-        max_direct_memory_size=32
-        [ "$trace" = "on" ] && echo vm option -XX:MaxDirectMemorySize is not set, use default value ${max_direct_memory_size}m
-    fi
-
-    max_meta_space_size=$(get_java_opt "$java_params" "-XX:MaxMetaspaceSize")
-    if [ $? -ne 0 ]; then
-        echo $max_meta_space_size && exit 1
-    fi
-    if [ -z "$max_meta_space_size" ]; then
-        has_max_meta_space_size=0
-        max_meta_space_size=100
-        [ "$trace" = "on" ] && echo vm option -XX:MaxMetaspaceSize is not set, use default value ${max_meta_space_size}m
-    fi
-
-    max_code_cache_size=$(get_java_opt "$java_params" "-XX:ReservedCodeCacheSize")
-    if [ $? -ne 0 ]; then
-        echo $max_code_cache_size && exit 1
-    fi
-    if [ -z "$max_code_cache_size" ]; then
-        has_max_code_cache_size=0
-        max_code_cache_size=100
-        [ "$trace" = "on" ] && echo vm option -XX:ReservedCodeCacheSize is not set, use default value ${max_code_cache_size}m
-    fi
-
-    max_compressed_class_size=$(get_java_opt "$java_params" "-XX:CompressedClassSpaceSize")
-    if [ $? -ne 0 ]; then
-        echo $max_compressed_class_size && exit 1
-    fi
-    if [ -z "$max_compressed_class_size" ]; then
-        has_max_compressed_class_size=0
-        max_compressed_class_size=32
-        [ "$trace" = "on" ] && echo vm option -XX:CompressedClassSpaceSize is not set, use default value ${max_compressed_class_size}m
-    fi
 
     max_heap_size=$(get_java_opt "$java_params" "-XX:MaxHeapSize")
     if [ $? -ne 0 ]; then
@@ -136,17 +87,14 @@ else
     if [ -z "$max_heap_size" ]; then
         max_heap_size=$(get_java_opt "$java_params" "-Xmx")
     fi
+    if [ $max_heap_size -gt $limit_in_mb ]; then
+        echo memory required exceed the limitation ${limit_in_mb}m && exit 1
+    fi
     if [ -z "$max_heap_size" ]; then
         has_max_heap_size=0
-        max_heap_size=$((limit_in_mb - reserved_mem_size - max_meta_space_size - max_direct_memory_size - max_code_cache_size - max_compressed_class_size))
-        [ "$trace" = "on" ] && echo vm option -Xmx is not set, so we figure out the value ${max_heap_size}m
-    fi
-
-    if [ $((max_heap_size + reserved_mem_size + max_meta_space_size + max_direct_memory_size + max_code_cache_size + max_compressed_class_size)) -gt $limit_in_mb ]; then
-        echo memory required\(MaxHeapSize=${max_heap_size}m, ReservedMemorySize=${reserved_mem_size}m, MaxMetaspaceSize=${max_meta_space_size}m, MaxDirectMemorySize=${max_direct_memory_size}, MaxCodeCacheSize=${max_code_cache_size}m, MaxCompressedClassSize=${max_compressed_class_size}m\) exceed the limitation ${limit_in_mb}m && exit 1
-    fi
-    if [ $max_heap_size -le 0 ]; then
-        echo MaxHeapSize should not be less than 0. && exit 1
+        #max_heap_size=$((limit_in_mb - reserved_mem_size - max_meta_space_size - max_direct_memory_size - max_code_cache_size - max_compressed_class_size))
+        max_heap_size=`echo $heap_ratio $limit_in_mb|awk '{print int($1 * $2)}'`
+        [ "$trace" = "on" ] && echo jvm option -Xmx is not set, so we figure out the value ${max_heap_size}m
     fi
 
     min_heap_size=$(get_java_opt "$java_params" "-Xms")
@@ -168,38 +116,15 @@ else
     fi
     if [ -z "$thread_stack_size" ]; then
         has_thread_stack_size=0
-        thread_stack_size=256k
+        thread_stack_size=512k
     fi
 
     ext_params=""
-    if [ "$has_min_heap_size" = "0" ]; then
-        ext_params="$ext_params -Xms${min_heap_size}m"
-    fi
-    if [ "$has_max_heap_size" = "0" ]; then
-        ext_params="$ext_params -Xmx${max_heap_size}m"
-    fi
-    if [ "$has_max_meta_space_size" = "0" ]; then
-        ext_params="$ext_params -XX:MaxMetaspaceSize=${max_meta_space_size}m"
-    fi
-    if [ "$has_max_direct_memory_size" = "0" ]; then
-        ext_params="$ext_params -XX:MaxDirectMemorySize=${max_direct_memory_size}m"
-    fi
-    if [ "$has_max_code_cache_size" = "0" ]; then
-        ext_params="$ext_params -XX:ReservedCodeCacheSize=${max_code_cache_size}m"
-    fi
-    if [ "$has_max_compressed_class_size" = "0" ]; then
-        ext_params="$ext_params -XX:CompressedClassSpaceSize=${max_compressed_class_size}m"
-    fi
-    if [ "$has_thread_stack_size" = "0" ]; then
-        ext_params="$ext_params -Xss${thread_stack_size}"
-    fi
-    if [ "$trace" = "on" ]; then
-        ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags"
-    fi
-
-    if [[ "$interpret" == "on" ]] || [[ "$interpret" == "ON" ]]; then
-        ext_params="$ext_params -Xint"        
-    fi
+    [ "$has_max_heap_size" = "0" ] && ext_params="$ext_params -Xmx${max_heap_size}m"
+    [ "$has_min_heap_size" = "0" ] && ext_params="$ext_params -Xms${min_heap_size}m"
+    [ "$has_thread_stack_size" = "0" ] && ext_params="$ext_params -Xss${thread_stack_size}"
+    [ "$trace" = "on" ] && ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags"
+    [ "$interpret" = "on" ] && ext_params="$ext_params -Xint"
     [ "$trace" = "on" ] && echo $JAVACMD $ext_params $java_params
     exec $JAVACMD $ext_params $java_params
 fi
