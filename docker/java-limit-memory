@@ -58,7 +58,7 @@ function get_env() {
     fi
 }
 
-JAVACMD="java"
+JAVACMD=`type java |awk '{print $(NF)}'`
 $JAVACMD -version > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
@@ -68,9 +68,12 @@ trace="$X_TRACE"
 interpret="$X_INT"
 
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
-limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-limit_in_mb=$((limit_in_bytes / 1048576))
-if [ "$limit_in_mb" -gt "1048576" ]; then
+
+if [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
+    limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+    limit_in_mb=$((limit_in_bytes / 1048576))
+fi
+if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
     [ "$trace" = "on" ] && echo $JAVACMD $*
     exec $JAVACMD $*
 else
