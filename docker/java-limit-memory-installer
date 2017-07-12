@@ -14,5 +14,5 @@ if [ $? -ne 0 ]; then
 fi
 
 curl -sSL -o /usr/local/bin/java 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
-  && chmod +x /usr/local/bin/java \
-  && ed -i "s#JAVACMD=.*#JAVACMD=$JAVACMD#g" java-limit-memory 
+  && sed -i"fuck" "s@JAVACMD=.*@JAVACMD=$JAVACMD@g" /usr/local/bin/java \
+  && chmod +x /usr/local/bin/java
