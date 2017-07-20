@@ -1,7 +1,7 @@
 #! /bin/bash
 
-yum install -y curl wget net-utils gcc automake make pam-devel openldap-devel cyrus-sasl-devel openssl-devel \
-  && wget 'https://nchc.dl.sourceforge.net/project/ss5/ss5/3.8.9-8/ss5-3.8.9-8.tar.gz' \
+yum install -y curl wget net-tools gcc automake make pam-devel openldap-devel cyrus-sasl-devel openssl-devel \
+  && wget -O ss5-3.8.9-8.tar.gz 'https://nchc.dl.sourceforge.net/project/ss5/ss5/3.8.9-8/ss5-3.8.9-8.tar.gz' \
   && tar xvf ss5-3.8.9-8.tar.gz \
   && cd ss5-3.8.9 \
   && ./configure && make && make install
