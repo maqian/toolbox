@@ -1,0 +1,8 @@
+#! /bin/bash
+
+yum install -y curl gcc automake make openssh-clients \
+  && curl -sSL 'https://raw.githubusercontent.com/maqian/workarounds/master/3rd/autossh-1.4e.tgz' | tar xz \
+  && cd autossh-1.4e \
+  && ./configure && make && make install \
+  && cd .. \
+  && rm -rf autossh-1.4e* 
