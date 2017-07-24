@@ -1,6 +1,6 @@
 #! /bin/bash
 
-yum install -y gcc automake make git libevent-dev \
+yum install -y gcc automake make git libevent-devel \
   && git clone https://github.com/darkk/redsocks  \
   && cd redsocks \
   && make && make install \
