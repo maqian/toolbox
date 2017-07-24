@@ -3,6 +3,8 @@
 yum install -y gcc automake make git libevent-devel \
   && git clone https://github.com/darkk/redsocks  \
   && cd redsocks \
-  && make && make install \
+  && make \
+  && cp -uf redsocks /usr/bin/redsocks \
+  && mkdir -p /etc/redsocks && cp redsocks.conf.example -uf /etc/redsocks/redsocks.conf.example \
   && cd .. \
   && rm -rf redsocks 
