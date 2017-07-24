@@ -5,4 +5,4 @@ yum install -y curl gcc automake make pam-devel openldap-devel cyrus-sasl-devel 
   && cd ss5-3.8.9 \
   && ./configure && make && make install \
   && cd .. \
-  && rm -rf ss5-3.8.9* 
+  && rm -rf ss5-3.8.9 

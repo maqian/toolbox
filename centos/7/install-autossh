@@ -5,4 +5,4 @@ yum install -y curl gcc automake make openssh-clients \
   && cd autossh-1.4e \
   && ./configure && make && make install \
   && cd .. \
-  && rm -rf autossh-1.4e* 
+  && rm -rf autossh-1.4e 
