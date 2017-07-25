@@ -1,0 +1,11 @@
+#! /bin/bash
+
+#更新系统及内核版本，并开启overlay支持
+yum upgrade --assumeyes --tolerant \
+&& rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org \
+&& rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm \
+&& yum --enablerepo=elrepo-kernel install kernel-ml-devel kernel-ml -y \
+&& grub2-set-default 0 \
+&& sudo tee /etc/modules-load.d/overlay.conf <<-EOF
+overlay
+EOF
