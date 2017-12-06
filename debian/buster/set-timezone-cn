@@ -1,0 +1,6 @@
+#! /bin/bash
+
+echo "Asia/Shanghai" > /etc/timezone \
+  && "cp" -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+  && echo export TIMEZONE=Asia/Shanghai >> /etc/profile \
+  && echo export TZ=Asia/Shanghai >> /etc/profile
