@@ -1,6 +1,6 @@
 #! /bin/bash
 
-apt-get install -y language-pack-zh-hans \
+apt-get install -y locales \
   && sed -i 's/# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/g' /etc/locale.gen \
   && locale-gen \
   && echo LC_ALL="zh_CN.UTF-8" >> /etc/environment \
