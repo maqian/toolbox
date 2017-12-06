@@ -1,5 +1,14 @@
 #! /bin/bash
 
-sed -i 's|deb.debian.org|mirrors.163.com|g' /etc/apt/sources.list \
-  && apt-get update -y 
+rm -rf /etc/apt/sources.list /etc/apt/sources.list.d/buster-backports.list
 
+tee /etc/apt/sources.list << EOF
+deb http://mirrors.163.com/debian/ buster main non-free contrib
+deb http://mirrors.163.com/debian/ buster-updates main non-free contrib
+deb-src http://mirrors.163.com/debian/ buster main non-free contrib
+deb-src http://mirrors.163.com/debian/ buster-updates main non-free contrib
+deb http://mirrors.163.com/debian-security/ buster/updates main non-free contrib
+deb-src http://mirrors.163.com/debian-security/ buster/updates main non-free contrib
+EOF
+
+apt-get update -y

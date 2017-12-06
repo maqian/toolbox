@@ -1,9 +1,16 @@
 #! /bin/bash
 
-aliyun_sources_file=/etc/apt/sources.list.d/aliyun-jessie.list
-cat /dev/null > $aliyun_sources_file \
-  && echo deb http://mirrors.aliyun.com/debian/ jessie main non-free contrib >> $aliyun_sources_file \
-  && echo deb http://mirrors.aliyun.com/debian/ jessie-updates main non-free contrib >> $aliyun_sources_file \
-  && echo deb http://mirrors.aliyun.com/debian/ jessie-backports main non-free contrib >> $aliyun_sources_file \
-  && echo deb http://mirrors.aliyun.com/debian-security/ jessie/updates main non-free contrib >> $aliyun_sources_file
+rm -rf /etc/apt/sources.list /etc/apt/sources.list.d/jessie-backports.list
 
+tee /etc/apt/sources.list << EOF
+deb http://mirrors.163.com/debian/ jessie main non-free contrib
+deb http://mirrors.163.com/debian/ jessie-updates main non-free contrib
+deb http://mirrors.163.com/debian/ jessie-backports main non-free contrib
+deb-src http://mirrors.163.com/debian/ jessie main non-free contrib
+deb-src http://mirrors.163.com/debian/ jessie-updates main non-free contrib
+deb-src http://mirrors.163.com/debian/ jessie-backports main non-free contrib
+deb http://mirrors.163.com/debian-security/ jessie/updates main non-free contrib
+deb-src http://mirrors.163.com/debian-security/ jessie/updates main non-free contrib
+EOF
+
+apt-get update -y
