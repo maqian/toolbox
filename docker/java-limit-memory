@@ -37,7 +37,7 @@ function get_java_opt() {
     fi
 
     if [ -n "$value" ] && [[ ! "$value" =~ [0-9]+[kKmMgG]*$ ]]; then
-        echo invalid value $value for vm option $key
+        echo Invalid value $value for vm option $key
         return 1
     else
         echo $(get_value_as_mbytes "key" "$value")
@@ -50,7 +50,7 @@ function get_env() {
     local value="${!key}"
 
     if [ -n "$value" ] && [[ ! "$value" =~ [0-9]+[kKmMgG]*$ ]]; then
-        echo invalid value $value for environment variable $key
+        echo Invalid value $value for environment variable $key
         return 1
     else
         echo $(get_value_as_mbytes "key" "$value")
@@ -61,26 +61,49 @@ function get_env() {
 JAVACMD=`type java |awk '{print $(NF)}'`
 $JAVACMD -version > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
+    echo Could not find java program in your system, please install a java package or set JAVA_HOME in PATH. && exit 1
 fi
 
-trace="$X_TRACE"; [ "$trace" = "ON" ] && trace=on
+trace="$X_TRACE"; ([ "$trace" = "ON" ] || [ "$trace" = "1" ]) && trace=on
+
+debug="$X_DEBUG"; ([ "$debug" = "ON" ] || [ "$debug" = "1" ]) && debug=on
+if [ "$debug" = "on" ]; then
+  if [[ "$X_DEBUG_PORT" =~ ^[1-9][0-9]*$ ]]; then
+    debug_port="$X_DEBUG_PORT"
+  else
+    debug_port="${!X_DEBUG_PORT}"
+  fi
+  ([ -z "$debug_port" ] || [[ ! "$debug_port" =~ ^[1-9][0-9]*$ ]]) && echo Cound not resolve environment variable X_DEBUG_PORT: $X_DEBUG_PORT && exit 1
+  debug_param="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debug_port"
+fi
+
+jmx="$X_JMX"; ([ "$jmx" = "ON" ] || [ "$jmx" = "1" ]) && jmx=on
+if [ "$jmx" = "on" ];then
+  if [[ "$X_JMX_PORT" =~ ^[1-9][0-9]*$ ]]; then
+    jmx_port="$X_JMX_PORT"
+  else
+    jmx_port="${!X_JMX_PORT}"
+  fi
+  ([ -z "$jmx_port" ] || [[ ! "$jmx_port" =~ ^[1-9][0-9]*$ ]]) && echo Cound not resolve environment variable X_JMX_PORT: $X_JMX_PORT && exit 1
+  jmx_param="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$jmx_port -Dcom.sun.management.jmxremote.rmi.port=$jmx_port -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=$(hostname)"
+fi
+
 interpret="$X_INT"; [ "$interpret" = "ON" ] && interpret=on
 heap_ratio="$X_HEAP_RATIO"; [ -z "$heap_ratio" ] && heap_ratio=0.6
 limit_in_mb=$(get_env "X_MEM_LIMIT")
 
-# apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
+java_params="$*"; [[ ! $java_params == *$JAVA_OPTS* ]] && java_params="$JAVA_OPTS $java_params"
 
+# apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
 if [ -z "limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
     limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
     limit_in_mb=$((limit_in_bytes / 1048576))
 fi
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
-    [ "$trace" = "on" ] && echo $JAVACMD $*
-    exec $JAVACMD $*
+    [ "$trace" = "on" ] && echo $JAVACMD $java_params
+    exec $JAVACMD $debug_param $jmx_param $java_params
 else
-    java_params="$*"
 
     min_heap_free_ratio=$(get_java_opt "$java_params" "-XX:MinHeapFreeRatio")
     if [ $? -ne 0 ]; then
@@ -180,5 +203,5 @@ else
     [ "$has_adaptive_size_policy_weight" = "0" ] && ext_params="$ext_params -XX:AdaptiveSizePolicyWeight=$adaptive_size_policy_weight"
     [ "$trace" = "on" ] && ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags -XX:+UnlockDiagnosticVMOptions -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics"
     [ "$trace" = "on" ] && echo $JAVACMD $ext_params $java_params
-    exec $JAVACMD $ext_params $java_params
+    exec $JAVACMD $ext_params $debug_param $jmx_param $java_params
 fi
