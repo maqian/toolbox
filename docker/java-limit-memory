@@ -67,16 +67,13 @@ fi
 trace="$X_TRACE"; [ "$trace" = "ON" ] && trace=on
 interpret="$X_INT"; [ "$interpret" = "ON" ] && interpret=on
 heap_ratio="$X_HEAP_RATIO"; [ -z "$heap_ratio" ] && heap_ratio=0.6
+limit_in_mb=$(get_env "X_MEM_LIMIT")
 
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
 
-if [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
+if [ -z "limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
     limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
     limit_in_mb=$((limit_in_bytes / 1048576))
-fi
-
-if [ -z "$limit_in_mb" ]; then
-    limit_in_mb=$(get_env "X_MEM_LIMIT")
 fi
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
