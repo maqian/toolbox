@@ -1,0 +1,8 @@
+#! /bin/bash
+  
+cd /usr/local \
+  && git clone --depth=1 https://github.com/jvm-profiling-tools/perf-map-agent.git \
+  && cd perf-map-agent \
+  && cmake . && make \
+  && bin/create-links-in /usr/local/bin \
+  && cd ..

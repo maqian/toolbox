@@ -1,0 +1,9 @@
+#! /bin/bash
+
+git clone --depth=1 https://github.com/jemalloc/jemalloc.git \
+  && cd jemalloc \
+  && ./configure --prefix=/usr/local --enable-prof \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf jemalloc

@@ -14,5 +14,5 @@ if [ $? -ne 0 ]; then
 fi
 
 curl -sSL -o /usr/local/bin/java 'https://raw.githubusercontent.com/maqian/toolbox/master/bin/ejava' \
-  && sed -i"just for mac" "s@JAVACMD=.*@JAVACMD=$JAVACMD@g" /usr/local/bin/java \
+  && sed -i"" "s@JAVACMD=.*@JAVACMD=$JAVACMD@g" /usr/local/bin/java \
   && chmod +x /usr/local/bin/java
