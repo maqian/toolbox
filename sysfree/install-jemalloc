@@ -2,8 +2,8 @@
 
 git clone --depth=1 https://github.com/jemalloc/jemalloc.git \
   && cd jemalloc \
-  && ./configure --prefix=/usr/local --enable-prof \
+  && ./autogen.sh --prefix=/usr/local --enable-prof \
   && make \
-  && make install \
+  && make install_bin install_include install_lib \
   && cd .. \
   && rm -rf jemalloc
