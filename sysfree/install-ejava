@@ -13,6 +13,6 @@ if [ $? -ne 0 ]; then
     echo could not find java program in your system, please install a java package or set JAVA_HOME environment variable. && exit 1
 fi
 
-curl -sSL -o /usr/local/bin/java 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory' \
-  && sed -i"fuck" "s@JAVACMD=.*@JAVACMD=$JAVACMD@g" /usr/local/bin/java \
+curl -sSL -o /usr/local/bin/java 'https://raw.githubusercontent.com/maqian/toolbox/master/bin/ejava' \
+  && sed -i"just for mac" "s@JAVACMD=.*@JAVACMD=$JAVACMD@g" /usr/local/bin/java \
   && chmod +x /usr/local/bin/java

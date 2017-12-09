@@ -1,8 +1,0 @@
-#! /bin/bash
-
-yum install -y curl gcc automake make pam-devel openldap-devel cyrus-sasl-devel openssl-devel \
-  && curl -sSL 'https://raw.githubusercontent.com/maqian/workarounds/master/3rd/ss5-3.8.9.tgz' | tar xz \
-  && cd ss5-3.8.9 \
-  && ./configure && make && make install \
-  && cd .. \
-  && rm -rf ss5-3.8.9 

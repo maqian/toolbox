@@ -1,7 +1,6 @@
 #! /bin/bash
 
-yum install -y git curl gcc automake make httpd pam-devel tcp_wrappers tcp_wrappers-devel \
-  && curl -sSL 'https://www.inet.no/dante/files/dante-1.4.2.tar.gz' | tar xz \
+curl -sSL 'https://www.inet.no/dante/files/dante-1.4.2.tar.gz' | tar xz \
   && cd dante-1.4.2 \
   && ./configure && make && make install \
   && cd .. && rm -rf dante-1.4.2 \

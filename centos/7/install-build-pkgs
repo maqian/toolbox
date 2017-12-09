@@ -1,0 +1,3 @@
+#! /bin/bash
+
+yum install -y git curl gcc g++ automake make cmake

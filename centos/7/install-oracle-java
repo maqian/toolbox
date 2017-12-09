@@ -1,7 +1,5 @@
 #! /bin/bash
 
-# MAINTAINER Ma Qian<maqian258@gmail.com>
-
 JAVA_PACKAGE=$1
 JAVA_VERSION=$2 
 JAVA_UPDATE=$3 

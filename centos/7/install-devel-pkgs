@@ -1,0 +1,3 @@
+#! /bin/bash
+
+yum install -y httpd openssh-clients pam-devel tcp_wrappers-devel libevent-devel pam-devel openldap-devel cyrus-sasl-devel openssl-devel zlib-devel pcre-devel

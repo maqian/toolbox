@@ -1,0 +1,7 @@
+#! /bin/bash
+
+curl -sSL 'https://raw.githubusercontent.com/maqian/toolbox/master/3rd/autossh-1.4e.tgz' | tar xz \
+  && cd autossh-1.4e \
+  && ./configure && make && make install \
+  && cd .. \
+  && rm -rf autossh-1.4e 

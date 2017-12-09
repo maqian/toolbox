@@ -1,7 +1,7 @@
 文件列表
 =======
-java-limit-memory，java程序启动脚本，容器中使用此脚本来启动java程序，可以给java进程加上默认的内存限制
-java-limit-memory-installer，这是一个安装脚本，用于将java-limit-memory脚本安装到目标环境中
+bin/ejava，java程序启动脚本，容器中使用此脚本来启动java程序，可以给java进程加上默认的内存限制
+sysfree/install-ejava，这是一个安装脚本，用于将ejava脚本安装到目标环境中
 
 
 背景介绍
@@ -12,7 +12,7 @@ Docker容器启动时可使用-m参数限制内存，在当前版本的Java虚�
 
 工作原理
 =======
-java-limit-memory会检测java启动参数，对没有设置的内存参数指定默认值。流程如下：
+ejava会检测java启动参数，对没有设置的内存参数指定默认值。流程如下：
 1. 从文件/sys/fs/cgroup/memory/memory.limit_in_bytes读取cgroups内存限制LimitMemory
 1. 检测是否含有环境变量X_HEAP_RATIO，如果没有则设置为0.6
 1. 检测是否含有JAVA启动参数-XX:MaxHeapSize或者-Xmx，没有则设置为MaxHeapSize = LimitMemory * X_HEAP_RATIO
@@ -29,6 +29,6 @@ java-limit-memory会检测java启动参数，对没有设置的内存参数指�
 如何安装
 =======
 运行安装脚本
-`curl -sSL 'https://raw.githubusercontent.com/maqian/workarounds/master/docker/java-limit-memory-installer' | sh`
+`curl -sSL 'https://raw.githubusercontent.com/maqian/toolbox/master/sysfree/install-ejava' | sh`
 安装脚本执行完后，会创建/usr/local/bin/java脚本文件，运行/usr/local/bin/java脚本会调用系统的java程序。
 
