@@ -50,3 +50,4 @@ curl -SL -o /tmp/${JAVA_FILE} -jkSLH "Cookie: oraclelicense=accept-securebackup-
         $JRE_RM_PATH/lib/oblique-fonts
 
 echo export JAVA_HOME=$JAVA_HOME >> /etc/profile
+export JAVA_HOME=$JAVA_HOME
