@@ -101,7 +101,7 @@ JAVACMD=`type java |awk '{print $(NF)}'`
 $JAVACMD -version > /dev/null 2>&1
 [ $? -ne 0 ] && echo Could not find java program in your system, please install a java package or set JAVA_HOME in PATH. && exit 1
 
-log_path=$(get_env "$X_LOG_PATH" "/var/log/java")
+log_path=$(get_env "$X_LOG_PATH" "/var/log/java"); mkdir -p $log_path
 verbose=$(get_env_as_switch "X_VERBOSE")
 nmt=$(get_env_as_switch "X_NMT")
 profile=$(get_env_as_switch "X_PROFILE")
@@ -129,22 +129,47 @@ fi
 heap_ratio=$(get_env "X_HEAP_RATIO", "0.6")
 limit_in_mb=$(get_env_as_mbytes "X_MEM_LIMIT")
 
-java_params="$*"; [[ ! $java_params == *$JAVA_OPTS* ]] && java_params="$JAVA_OPTS $java_params"
-
-# apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
-if [ -z "limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
-    limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-    limit_in_mb=$((limit_in_bytes / 1048576))
-fi
+echo Feature Flag:
+echo X_TASK_ID: $task_id
+echo X_LOG_PATH: $log_path
+echo X_VERBOSE: $verbose
+echo X_NMT: $nmt
+echo X_PROFILE: $profile
+echo X_GC_LOG: $gc_log
+echo X_OOM_DUMP: $oom_dump
+echo X_DEBUG: $debug
+echo X_DEBUG_PORT: $debug_port
+echo X_JMX: $jmx
+echo X_JMX_PORT: $jmx_port
+echo X_INT: $interpret
+echo X_HEAP_RATIO: $heap_ratio
+echo X_MEM_LIMIT: ${limit_in_mb}M
 
 if [ "$nmt" = "on" ]; then
     export LD_PRELOAD=/usr/local/lib/libjemalloc.so
     export MALLOC_CONF=prof:true,lg_prof_interval:29,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
 fi
 
+ext_params="-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions"
+[ "$verbose" = "on" ] && ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags"
+[ "$gc_log" = "on" ] && ext_params="$ext_params -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:${log_path}/${task_id}.gc.log"
+[ "$oom_dump" = "on" ] && ext_params="$ext_params -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${log_path}/${task_id}.heapdump.hprof"
+[ "$nmt" = "on" ] && ext_params="$ext_params -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics"
+[ "$profile" = "on" ] && ext_params="$ext_params -XX:+PreserveFramePointer"
+[ "$debug" = "on" ] && ext_params="$ext_params $debug_param"
+[ "$jmx" = "on" ] && ext_params="$ext_params $jmx_param"
+[ "$interpret" = "on" ] && ext_params="$ext_params -Xint"
+
+java_params="$*"; [[ ! $java_params == *$JAVA_OPTS* ]] && java_params="$JAVA_OPTS $java_params"
+# apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
+if [ -z "limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
+    limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+    limit_in_mb=$((limit_in_bytes / 1048576))
+fi
+
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
-    [ "$verbose" = "on" ] && echo $JAVACMD $java_params
-    exec $JAVACMD $debug_param $jmx_param $java_params
+    [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params
+    exec $JAVACMD $ext_params $java_params
 else
 
     min_heap_free_ratio=$(get_java_opt "$java_params" "-XX:MinHeapFreeRatio")
@@ -174,7 +199,6 @@ else
         has_adaptive_size_policy_weight=0
         adaptive_size_policy_weight=90
     fi
-
 
     max_heap_size=$(get_java_opt "$java_params" "-XX:MaxHeapSize")
     [ $? -ne 0 ] && echo $max_heap_size && exit 1
@@ -215,23 +239,17 @@ else
         parallel_gc_threads=2
     fi
 
-    JAVA_VERSION=`$JAVACMD -version  2>&1 |head -n1|sed 's/"//g'|awk '{print $3}'`
-    ext_params="-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintVMOptions -XX:+PrintCommandLineFlags -XX:+PrintFlagsInitial -XX:+PrintFlagsFinal"
     ext_params="$ext_params -XX:MaxRAM=${limit_in_mb}m"
+    JAVA_VERSION=`$JAVACMD -version  2>&1 |head -n1|sed 's/"//g'|awk '{print $3}'`
     [[ ! "$JAVA_VERSION" < "1.8.0_131" ]] && ext_params="$ext_params -XX:+UseCGroupMemoryLimitForHeap"
     [ "$has_max_heap_size" = "0" ] && ext_params="$ext_params -Xmx${max_heap_size}m"
     [ "$has_min_heap_size" = "0" ] && ext_params="$ext_params -Xms${min_heap_size}m"
     [ "$has_thread_stack_size" = "0" ] && ext_params="$ext_params -Xss${thread_stack_size}"
-    [ "$interpret" = "on" ] && ext_params="$ext_params -Xint"
     [ "$has_parallel_gc_threads" = "0" ] && ext_params="$ext_params -XX:ParallelGCThreads=$parallel_gc_threads"
     [ "$has_min_heap_free_ratio" = "0" ] && ext_params="$ext_params -XX:MinHeapFreeRatio=$min_heap_free_ratio"
     [ "$has_max_heap_free_ratio" = "0" ] && ext_params="$ext_params -XX:MaxHeapFreeRatio=$max_heap_free_ratio"
     [ "$has_gc_time_ratio" = "0" ] && ext_params="$ext_params -XX:GCTimeRatio=$gc_time_ratio"
     [ "$has_adaptive_size_policy_weight" = "0" ] && ext_params="$ext_params -XX:AdaptiveSizePolicyWeight=$adaptive_size_policy_weight"
-    [ "gc_log" = "on" ] && ext_params="$ext_params -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:${log_path}/${task_id}.gc.log"
-    [ "oom_dump" = "on" ] && ext_params="$ext_params -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${log_path}/${task_id}.heapdump.hprof"
-    [ "$nmt" = "on" ] && ext_params="$ext_params -XX:NativeMemoryTracking=detail -XX:+PrintNMTStatistics"
-    [ "$profile" = "on" ] && ext_params="$ext_params -XX:+PreserveFramePointer -XX:+UnlockCommercialFeatures -XX:+FlightRecorder"
     [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params 
-    exec $JAVACMD $ext_params $debug_param $jmx_param $java_params
+    exec $JAVACMD $ext_params $java_params
 fi
