@@ -104,6 +104,7 @@ $JAVACMD -version > /dev/null 2>&1
 log_path=$(get_env "$X_LOG_PATH" "/var/log/java")
 verbose=$(get_env_as_switch "X_VERBOSE")
 nmt=$(get_env_as_switch "X_NMT")
+profile=$(get_env_as_switch "X_PROFILE")
 gc_log=$(get_env_as_switch "X_GC_LOG")
 oom_dump=$(get_env_as_switch "X_OOM_DUMP")
 #trace=$(get_env_as_switch "X_TRACE")
@@ -134,6 +135,11 @@ java_params="$*"; [[ ! $java_params == *$JAVA_OPTS* ]] && java_params="$JAVA_OPT
 if [ -z "limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
     limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
     limit_in_mb=$((limit_in_bytes / 1048576))
+fi
+
+if [ "$nmt" = "on" ]; then
+    export LD_PRELOAD=/usr/local/lib/libjemalloc.so
+    export MALLOC_CONF=prof:true,lg_prof_interval:29,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
 fi
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
@@ -225,6 +231,7 @@ else
     [ "gc_log" = "on" ] && ext_params="$ext_params -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:${log_path}/${task_id}.gc.log"
     [ "oom_dump" = "on" ] && ext_params="$ext_params -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${log_path}/${task_id}.heapdump.hprof"
     [ "$nmt" = "on" ] && ext_params="$ext_params -XX:NativeMemoryTracking=detail -XX:+PrintNMTStatistics"
-    [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params
+    [ "$profile" = "on" ] && ext_params="$ext_params -XX:+PreserveFramePointer -XX:+UnlockCommercialFeatures -XX:+FlightRecorder"
+    [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params 
     exec $JAVACMD $ext_params $debug_param $jmx_param $java_params
 fi

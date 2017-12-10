@@ -1,0 +1,6 @@
+#! /bin/bash
+
+git clone --depth=1 https://github.com/brendangregg/FlameGraph.git \
+  && rm -rf FlameGraph/.git \
+  && cp -rf FlameGraph/* /usr/local/bin \
+  && rm -rf FlameGraph
