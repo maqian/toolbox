@@ -107,7 +107,6 @@ nmt=$(get_env_as_switch "X_NMT")
 profile=$(get_env_as_switch "X_PROFILE")
 gc_log=$(get_env_as_switch "X_GC_LOG")
 oom_dump=$(get_env_as_switch "X_OOM_DUMP")
-#trace=$(get_env_as_switch "X_TRACE")
 debug=$(get_env_as_switch "X_DEBUG")
 jmx=$(get_env_as_switch "X_JMX")
 interpret=$(get_env_as_switch "X_INT")
@@ -143,7 +142,6 @@ echo X_JMX: $jmx
 echo X_JMX_PORT: $jmx_port
 echo X_INT: $interpret
 echo X_HEAP_RATIO: $heap_ratio
-echo X_MEM_LIMIT: ${limit_in_mb}M
 
 if [ "$nmt" = "on" ]; then
     export LD_PRELOAD=/usr/local/lib/libjemalloc.so
@@ -162,10 +160,12 @@ ext_params="-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions"
 
 java_params="$*"; [[ ! $java_params == *$JAVA_OPTS* ]] && java_params="$JAVA_OPTS $java_params"
 # apply memory limitation on when /sys/fs/cgroup/memory/memory.limit_in_bytes is set
-if [ -z "limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
+if [ -z "$limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
     limit_in_bytes=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
     limit_in_mb=$((limit_in_bytes / 1048576))
 fi
+
+echo X_MEM_LIMIT: ${limit_in_mb:--1}M
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
     [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params
