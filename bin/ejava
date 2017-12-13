@@ -128,20 +128,22 @@ fi
 heap_ratio=$(get_env "X_HEAP_RATIO", "0.6")
 limit_in_mb=$(get_env_as_mbytes "X_MEM_LIMIT")
 
-echo Feature Flag:
-echo X_TASK_ID: $task_id
-echo X_LOG_PATH: $log_path
-echo X_VERBOSE: $verbose
-echo X_NMT: $nmt
-echo X_PROFILE: $profile
-echo X_GC_LOG: $gc_log
-echo X_OOM_DUMP: $oom_dump
-echo X_DEBUG: $debug
-echo X_DEBUG_PORT: $debug_port
-echo X_JMX: $jmx
-echo X_JMX_PORT: $jmx_port
-echo X_INT: $interpret
-echo X_HEAP_RATIO: $heap_ratio
+if [ "$verbose" = "on" ];then
+  echo Feature Flag:
+  echo X_TASK_ID: $task_id
+  echo X_LOG_PATH: $log_path
+  echo X_VERBOSE: $verbose
+  echo X_NMT: $nmt
+  echo X_PROFILE: $profile
+  echo X_GC_LOG: $gc_log
+  echo X_OOM_DUMP: $oom_dump
+  echo X_DEBUG: $debug
+  echo X_DEBUG_PORT: $debug_port
+  echo X_JMX: $jmx
+  echo X_JMX_PORT: $jmx_port
+  echo X_INT: $interpret
+  echo X_HEAP_RATIO: $heap_ratio
+fi
 
 if [ "$nmt" = "on" ]; then
     export LD_PRELOAD=/usr/local/lib/libjemalloc.so
@@ -165,7 +167,9 @@ if [ -z "$limit_in_mb" ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]
     limit_in_mb=$((limit_in_bytes / 1048576))
 fi
 
-echo X_MEM_LIMIT: ${limit_in_mb:--1}M
+if [ "$verbose" = "on" ];then
+  echo X_MEM_LIMIT: ${limit_in_mb:--1}M
+fi
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
     [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params
