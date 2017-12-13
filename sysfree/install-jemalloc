@@ -6,4 +6,5 @@ git clone --depth=1 https://github.com/jemalloc/jemalloc.git \
   && make \
   && make install_bin install_include install_lib \
   && cd .. \
-  && rm -rf jemalloc
+  && rm -rf jemalloc \
+  && yum install -y graphviz
