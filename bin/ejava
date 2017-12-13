@@ -147,7 +147,7 @@ fi
 
 if [ "$nmt" = "on" ]; then
     export LD_PRELOAD=/usr/local/lib/libjemalloc.so
-    export MALLOC_CONF=prof:true,lg_prof_interval:29,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
+    export MALLOC_CONF=prof:true,lg_prof_interval:27,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
 fi
 
 ext_params="-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions"
