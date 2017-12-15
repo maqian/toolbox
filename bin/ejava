@@ -145,7 +145,7 @@ if [ "$verbose" = "on" ];then
   echo X_HEAP_RATIO: $heap_ratio
 fi
 
-if [ "$nmt" = "on" ]; then
+if [ "$nmt" = "on" ] && [ -f "/usr/local/lib/libjemalloc.so" ]; then
     export LD_PRELOAD=/usr/local/lib/libjemalloc.so
     export MALLOC_CONF=prof:true,lg_prof_interval:27,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
 fi
