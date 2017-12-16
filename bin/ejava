@@ -101,7 +101,13 @@ JAVACMD=`type java |awk '{print $(NF)}'`
 $JAVACMD -version > /dev/null 2>&1
 [ $? -ne 0 ] && echo Could not find java program in your system, please install a java package or set JAVA_HOME in PATH. && exit 1
 
-log_path=$(get_env "$X_LOG_PATH" "/var/log/java"); mkdir -p $log_path
+service_name=$(get_env "SERVICE_NAME" "$SERVICE")
+[ -z "$service_name" ] && service_name="java"
+mesos_task_id=$(get_env "MESOS_TASK_ID" "apptask%p")
+task_id=$(get_env "X_TASK_ID" "$mesos_task_id")
+log_path=$(get_env "X_LOG_PATH" "/var/log/$service_name/$task_id"); mkdir -p $log_path
+heap_ratio=$(get_env "X_HEAP_RATIO", "0.6")
+
 verbose=$(get_env_as_switch "X_VERBOSE")
 nmt=$(get_env_as_switch "X_NMT")
 profile=$(get_env_as_switch "X_PROFILE")
@@ -109,51 +115,53 @@ gc_log=$(get_env_as_switch "X_GC_LOG")
 oom_dump=$(get_env_as_switch "X_OOM_DUMP")
 debug=$(get_env_as_switch "X_DEBUG")
 jmx=$(get_env_as_switch "X_JMX")
+jemalloc=$(get_env_as_switch "X_JEMALLOC")
+[ "$nmt" = "on" ] && jemalloc="on"
 interpret=$(get_env_as_switch "X_INT")
-mesos_task_id=$(get_env "MESOS_TASK_ID" "apptask%p")
-task_id=$(get_env "X_TASK_ID" "$mesos_task_id")
+limit_in_mb=$(get_env_as_mbytes "X_MEM_LIMIT")
 
 if [ "$debug" = "on" ]; then
-  debug_port=$(get_env_as_port "X_DEBUG_PORT")
-  [ $? -ne 0 ] && echo $debug_port && exit 1
-  debug_param="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debug_port"
+    debug_port=$(get_env_as_port "X_DEBUG_PORT")
+    [ $? -ne 0 ] && echo $debug_port && exit 1
+    debug_param="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debug_port"
 fi
 
 if [ "$jmx" = "on" ];then
-  jmx_port=$(get_env_as_port "X_JMX_PORT")
-  [ $? -ne 0 ] && echo $jmx_port && exit 1
-  jmx_param="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$jmx_port -Dcom.sun.management.jmxremote.rmi.port=$jmx_port -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=$(hostname)"
+    jmx_port=$(get_env_as_port "X_JMX_PORT")
+    [ $? -ne 0 ] && echo $jmx_port && exit 1
+    jmx_param="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$jmx_port -Dcom.sun.management.jmxremote.rmi.port=$jmx_port -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=$(hostname)"
 fi
 
-heap_ratio=$(get_env "X_HEAP_RATIO", "0.6")
-limit_in_mb=$(get_env_as_mbytes "X_MEM_LIMIT")
-
 if [ "$verbose" = "on" ];then
-  echo Feature Flag:
-  echo X_TASK_ID: $task_id
-  echo X_LOG_PATH: $log_path
-  echo X_VERBOSE: $verbose
-  echo X_NMT: $nmt
-  echo X_PROFILE: $profile
-  echo X_GC_LOG: $gc_log
-  echo X_OOM_DUMP: $oom_dump
-  echo X_DEBUG: $debug
-  echo X_DEBUG_PORT: $debug_port
-  echo X_JMX: $jmx
-  echo X_JMX_PORT: $jmx_port
-  echo X_INT: $interpret
-  echo X_HEAP_RATIO: $heap_ratio
+    echo Feature Flag:
+    echo X_TASK_ID: $task_id
+    echo X_LOG_PATH: $log_path
+    echo X_VERBOSE: $verbose
+    echo X_NMT: $nmt
+    echo X_PROFILE: $profile
+    echo X_GC_LOG: $gc_log
+    echo X_OOM_DUMP: $oom_dump
+    echo X_DEBUG: $debug
+    echo X_DEBUG_PORT: $debug_port
+    echo X_JMX: $jmx
+    echo X_JMX_PORT: $jmx_port
+    echo X_JEMALLOC: $jemalloc
+    echo X_INT: $interpret
+    echo X_HEAP_RATIO: $heap_ratio
+fi
+
+if [ "$jemalloc" = "on" ] && [ -f "/usr/local/lib/libjemalloc.so" ]; then
+    export LD_PRELOAD=/usr/local/lib/libjemalloc.so
 fi
 
 if [ "$nmt" = "on" ] && [ -f "/usr/local/lib/libjemalloc.so" ]; then
-    export LD_PRELOAD=/usr/local/lib/libjemalloc.so
-    export MALLOC_CONF=prof:true,lg_prof_interval:27,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
+    export MALLOC_CONF=prof:true,lg_prof_interval:28,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
 fi
 
 ext_params="-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions"
 [ "$verbose" = "on" ] && ext_params="$ext_params -XX:+PrintVMOptions -XX:+PrintCommandLineFlags"
-[ "$gc_log" = "on" ] && ext_params="$ext_params -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:${log_path}/${task_id}.gc.log"
-[ "$oom_dump" = "on" ] && ext_params="$ext_params -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${log_path}/${task_id}.heapdump.hprof"
+[ "$gc_log" = "on" ] && ext_params="$ext_params -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:${log_path}/gc.log"
+[ "$oom_dump" = "on" ] && ext_params="$ext_params -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${log_path}/heapdump.hprof"
 [ "$nmt" = "on" ] && ext_params="$ext_params -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics"
 [ "$profile" = "on" ] && ext_params="$ext_params -XX:+PreserveFramePointer"
 [ "$debug" = "on" ] && ext_params="$ext_params $debug_param"
