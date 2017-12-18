@@ -115,8 +115,6 @@ gc_log=$(get_env_as_switch "X_GC_LOG")
 oom_dump=$(get_env_as_switch "X_OOM_DUMP")
 debug=$(get_env_as_switch "X_DEBUG")
 jmx=$(get_env_as_switch "X_JMX")
-jemalloc=$(get_env_as_switch "X_JEMALLOC")
-[ "$nmt" = "on" ] && jemalloc="on"
 interpret=$(get_env_as_switch "X_INT")
 limit_in_mb=$(get_env_as_mbytes "X_MEM_LIMIT")
 
@@ -145,17 +143,8 @@ if [ "$verbose" = "on" ];then
     echo X_DEBUG_PORT: $debug_port
     echo X_JMX: $jmx
     echo X_JMX_PORT: $jmx_port
-    echo X_JEMALLOC: $jemalloc
     echo X_INT: $interpret
     echo X_HEAP_RATIO: $heap_ratio
-fi
-
-if [ "$jemalloc" = "on" ] && [ -f "/usr/local/lib/libjemalloc.so" ]; then
-    export LD_PRELOAD=/usr/local/lib/libjemalloc.so
-fi
-
-if [ "$nmt" = "on" ] && [ -f "/usr/local/lib/libjemalloc.so" ]; then
-    export MALLOC_CONF=prof:true,lg_prof_interval:28,lg_prof_sample:17,prof_prefix:${log_path}/jeprof
 fi
 
 ext_params="-XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions"
