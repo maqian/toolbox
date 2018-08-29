@@ -106,7 +106,7 @@ service_name=$(get_env "SERVICE_NAME" "$SERVICE")
 mesos_task_id=$(get_env "MESOS_TASK_ID" "apptask%p")
 task_id=$(get_env "X_TASK_ID" "$mesos_task_id")
 log_path=$(get_env "X_LOG_PATH" "/var/log/$service_name/$task_id"); mkdir -p $log_path
-heap_ratio=$(get_env "X_HEAP_RATIO", "0.6")
+heap_ratio=$(get_env "X_HEAP_RATIO" "0.6")
 
 verbose=$(get_env_as_switch "X_VERBOSE")
 nmt=$(get_env_as_switch "X_NMT")
