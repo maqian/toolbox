@@ -101,6 +101,7 @@ JAVACMD=`type java |awk '{print $(NF)}'`
 $JAVACMD -version > /dev/null 2>&1
 [ $? -ne 0 ] && echo Could not find java program in your system, please install a java package or set JAVA_HOME in PATH. && exit 1
 
+env_name=$(get_env "ENVIRONMENT" "dev")
 service_name=$(get_env "SERVICE_NAME" "$SERVICE")
 [ -z "$service_name" ] && service_name="java"
 mesos_task_id=$(get_env "MESOS_TASK_ID" "apptask%p")
@@ -117,6 +118,9 @@ debug=$(get_env_as_switch "X_DEBUG")
 jmx=$(get_env_as_switch "X_JMX")
 interpret=$(get_env_as_switch "X_INT")
 limit_in_mb=$(get_env_as_mbytes "X_MEM_LIMIT")
+
+sw=$(get_env_as_switch "SW")
+sw_agent=/agent/skywalking-agent.jar
 
 if [ "$debug" = "on" ]; then
     debug_port=$(get_env_as_port "X_DEBUG_PORT")
@@ -251,6 +255,7 @@ else
     [ "$has_max_heap_free_ratio" = "0" ] && ext_params="$ext_params -XX:MaxHeapFreeRatio=$max_heap_free_ratio"
     [ "$has_gc_time_ratio" = "0" ] && ext_params="$ext_params -XX:GCTimeRatio=$gc_time_ratio"
     [ "$has_adaptive_size_policy_weight" = "0" ] && ext_params="$ext_params -XX:AdaptiveSizePolicyWeight=$adaptive_size_policy_weight"
+    [ "sw" = "on" ] && ext_params="$ext_params -javaagent:${sw_agent}=agent.service_name=${service_name}.${env_name},collector.backend_service=${SW_AGENT_COLLECTOR_BACKEND_SERVICES}"
     [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params 
     exec $JAVACMD $ext_params $java_params
 fi

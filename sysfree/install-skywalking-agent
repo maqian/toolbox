@@ -1,0 +1,7 @@
+#! /bin/bash
+
+version=$1
+
+curl -sSL "https://mirrors.tuna.tsinghua.edu.cn/apache/skywalking/${version}/apache-skywalking-apm-${version}.tar.gz" | tar xz \
+  && cp -r apache-skywalking-apm-bin/agent / \
+  && rm -rf apache-skywalking-apm-bin 
