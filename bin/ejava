@@ -255,7 +255,7 @@ else
     [ "$has_max_heap_free_ratio" = "0" ] && ext_params="$ext_params -XX:MaxHeapFreeRatio=$max_heap_free_ratio"
     [ "$has_gc_time_ratio" = "0" ] && ext_params="$ext_params -XX:GCTimeRatio=$gc_time_ratio"
     [ "$has_adaptive_size_policy_weight" = "0" ] && ext_params="$ext_params -XX:AdaptiveSizePolicyWeight=$adaptive_size_policy_weight"
-    [ "$sw" = "on" ] && ext_params="$ext_params -javaagent:${sw_agent}=agent.service_name=${service_name}.${env_name},collector.backend_service=${SW_AGENT_COLLECTOR_BACKEND_SERVICES}"
+    [ "$sw" = "on" ] && ext_params="-javaagent:${sw_agent}=agent.service_name=${service_name}_${env_name},collector.backend_service=${SW_AGENT_COLLECTOR_BACKEND_SERVICES} $ext_params"
     [ "$verbose" = "on" ] && echo $JAVACMD $ext_params $java_params 
     exec $JAVACMD $ext_params $java_params
 fi
