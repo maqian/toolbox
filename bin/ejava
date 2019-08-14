@@ -228,8 +228,8 @@ sw_replace_pattern=$(get_env "skywalking.peer.replace_patterns")
 
 if [ "$sw" = "on" ]; then
     ext_params="$ext_params -javaagent:${sw_agent}=agent.service_name=${service_name}.${env_name},collector.backend_service=${SW_AGENT_COLLECTOR_BACKEND_SERVICES},logging.level=info,logging.dir=$log_path"
-    [ -n "$sw_trace_ignore_path" ] && ext_params="$ext_params -Dskywalking.trace.ignore_path=${sw_trace_ignore_path}"
-    [ -n "$sw_replace_pattern" ] && ext_params="$ext_params -Dskywalking.peer.replace_patterns=${sw_replace_pattern}"
+    [ -n "$sw_trace_ignore_path" ] && ext_params="$ext_params -Dskywalking.trace.ignore_path='${sw_trace_ignore_path}'"
+    [ -n "$sw_replace_pattern" ] && ext_params="$ext_params -Dskywalking.peer.replace_patterns='${sw_replace_pattern}'"
 fi
 
 if [ -z "$limit_in_mb" ] || [ "$limit_in_mb" -gt "1048576" ]; then
